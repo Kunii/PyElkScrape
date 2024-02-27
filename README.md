@@ -1,0 +1,2 @@
+# PyElkScrape
+ Python Elkjøp Scraper
