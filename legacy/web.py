@@ -1,12 +1,13 @@
 from flask import Flask, render_template
-from elkjopscraper import ElkScraper
+from scrape import reloadPageRaw
+from scrape import updateProductFile
 import concurrent.futures
 import os
 import time
-import csv
 
 HOST_BIND = "0.0.0.0"
 HOST_PORT = 20202
+REMOTE = False #Remote into docker container for browser env?
 batchSize = 4
 
 app = Flask(__name__)
@@ -14,7 +15,6 @@ app = Flask(__name__)
 topDir = os.getcwd()[len(os.path.dirname(os.getcwd()))+1:] #Get current dir
 dataDir = os.path.join("Test Web Scraping", "PyElkScrape", "data") if topDir == "Python Stuff" else "data"
 blackListFile = os.path.join(dataDir, "blacklist.txt")
-csvProductFile = os.path.join(dataDir, "products.csv")
 
 blacklistedItems = []
 pages = ["https://www.elkjop.no/outlet/page-1?filter=BGradeTitle:Som%20ny%20-%20Utg%C3%A5tt%20fra%20butikksortiment&sort=ActivePrice.Amount:desc"]
@@ -30,8 +30,22 @@ def containBlacklist(prodName):
 
     return False
 
-def createElkRemoteScraper(weburl):
-    return ElkScraper(weburl, "http://192.168.50.57:4444", True).getProducts()
+# def browsePages(webURL, pages):
+
+#     dat = []
+
+#     for currentPage in webURL:
+#         for batch in range(0, pages, batchSize):
+
+#             with concurrent.futures.ThreadPoolExecutor() as exec:
+#                 futures = [exec.submit(reloadPageAndFilter, REMOTE, blacklistedItems, currentPage.replace("page-1?", f"page-{i+batch+1}?")) for i in range(batchSize if batch+batchSize < pages else pages-batch)]
+#                 concurrent.futures.wait(futures)
+                
+#                 for f in futures:
+#                     dat.append(f.result())
+
+
+#     return dat
 
 def browsePagesRaw(webURL, pages):
 
@@ -41,64 +55,13 @@ def browsePagesRaw(webURL, pages):
         for batch in range(0, pages, batchSize):
 
             with concurrent.futures.ThreadPoolExecutor() as exec:
-                futures = [exec.submit(createElkRemoteScraper, currentPage.replace("page-1?", f"page-{i+batch+1}?")) for i in range(batchSize if batch+batchSize < pages else pages-batch)]
+                futures = [exec.submit(reloadPageRaw, REMOTE, currentPage.replace("page-1?", f"page-{i+batch+1}?")) for i in range(batchSize if batch+batchSize < pages else pages-batch)]
                 concurrent.futures.wait(futures)
                 
                 for f in futures:
                     dat.append(f.result())
 
     return dat
-
-def waitForFileAccess():
-
-    if not os.path.exists(csvProductFile):
-        with open(csvProductFile, "x") as f:
-            pass
-    
-    while True:
-        try:
-            with open(csvProductFile, "r", newline=''):
-                pass
-            return True
-        except IOError:
-            time.sleep(.25)
-
-    return False #Should never happen
-
-
-def saveProductsToFile(prods):
-
-    waitForFileAccess()
-    f = open(csvProductFile, "w", newline='')
-    cw = csv.writer(f)
-    cw.writerows(prods)
-    
-    f.close()
-
-def readProductFile():
-    
-    dat = []
-
-    waitForFileAccess()
-    f = open(csvProductFile, "r", newline='')
-    cr = csv.reader(f)
-
-    for l in cr:
-        dat.append(l)
-
-    f.close()
-
-    return dat
-
-def updateProductFile(prods):
-
-    oldProds = readProductFile() if os.path.exists(csvProductFile) else []
-
-    for p in prods:
-        if not p in oldProds:
-            print(f"New product: {p[0]}")
-            oldProds.append(p)
-    saveProductsToFile(oldProds)
 
 def reloadRaw(forceReload:bool):
     
@@ -116,7 +79,6 @@ def reloadRaw(forceReload:bool):
 
         for l in lastRawProds:
             updateProductFile(l)
-
     prods = []
 
     for page in lastRawProds:
