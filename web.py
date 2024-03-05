@@ -34,9 +34,9 @@ def containBlacklist(prodName):
 # firefoxInstallPath = r"c:\Program Files\Mozilla Firefox\firefox.exe"
 # firefoxDriver = os.path.join(driverDir, "geckodriver.exe")
 
-def createElkRemoteScraper(weburl):
+def createElkRemoteScraper(weburl, port):
     # return ElkScraper(weburl, firefoxInstallPath, False, firefoxDriver).getProducts()
-    return ElkScraper(weburl, "http://192.168.50.57:4444", True).getProducts() 
+    return ElkScraper(weburl, f"http://192.168.50.57:{port}", True).getProducts() 
 
 def browsePagesRaw(webURL, pages):
 
@@ -46,7 +46,7 @@ def browsePagesRaw(webURL, pages):
         for batch in range(0, pages, batchSize):
 
             with concurrent.futures.ThreadPoolExecutor() as exec:
-                futures = [exec.submit(createElkRemoteScraper, currentPage.replace("page-1?", f"page-{i+batch+1}?")) for i in range(batchSize if batch+batchSize < pages else pages-batch)]
+                futures = [exec.submit(createElkRemoteScraper, currentPage.replace("page-1?", f"page-{i+batch+1}?"), 4444+i) for i in range(batchSize if batch+batchSize < pages else pages-batch)]
                 concurrent.futures.wait(futures)
                 
                 for f in futures:
