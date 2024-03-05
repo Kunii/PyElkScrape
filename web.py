@@ -30,8 +30,13 @@ def containBlacklist(prodName):
 
     return False
 
+# driverDir = os.path.join("Test Web Scraping", "PyElkScrape", "drivers") if topDir == "Python Stuff" else "drivers"
+# firefoxInstallPath = r"c:\Program Files\Mozilla Firefox\firefox.exe"
+# firefoxDriver = os.path.join(driverDir, "geckodriver.exe")
+
 def createElkRemoteScraper(weburl):
-    return ElkScraper(weburl, "http://192.168.50.57:4444", True).getProducts()
+    # return ElkScraper(weburl, firefoxInstallPath, False, firefoxDriver).getProducts()
+    return ElkScraper(weburl, "http://192.168.50.57:4444", True).getProducts() 
 
 def browsePagesRaw(webURL, pages):
 

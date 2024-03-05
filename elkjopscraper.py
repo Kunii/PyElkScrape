@@ -25,8 +25,12 @@ class ElkScraper:
 
                 productInfoParent = titleDiv.find_element(By.CLASS_NAME, "product-tile__information")
                 productInfo_Price = productInfoParent.find_element(By.TAG_NAME, "elk-price")
-                productNewPrice = productInfo_Price.find_element(By.CLASS_NAME, "ng-star-inserted").text[0:-2]
+                ngstarinserted = productInfo_Price.find_element(By.CLASS_NAME, "ng-star-inserted")
 
+                temp = str(ngstarinserted.get_attribute("innerHTML"))
+                startStr = "class=\"ng-star-inserted\">"
+
+                productNewPrice = temp[(temp.find(startStr) + len(startStr)):temp.find(",-</span>")]
                 productImg = titleDiv.find_element(By.CLASS_NAME, "product-tile__image").get_property("src")
                 
                 product = [productTitle, productNewPrice, productLink, productImg, datetime.now().strftime("%Y/%m/%d %H:%M:%S")]

@@ -40,10 +40,4 @@ class ElkWorker(BrowserWorker):
     
 
     def getHtmlProducts(self):
-
-        try:
-            self.htmlProds = self.browser.find_elements(By.TAG_NAME, "elk-product-tile")
-        except:
-            pass
-        
-        return self.htmlProds
+        return self.browser.find_elements(By.TAG_NAME, "elk-product-tile")
